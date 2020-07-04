@@ -26,7 +26,7 @@ func NewOrderedMap() *OrderedMap {
 // Get returns the value for a key. If the key does not exist, the second return
 // parameter will be false and the value will be nil.
 func (m *OrderedMap) Get(key interface{}) (interface{}, bool) {
-	m.RLocker()
+	m.RLock()
 	defer m.RUnlock()
 	value, ok := m.kv[key]
 	if ok {
@@ -57,7 +57,7 @@ func (m *OrderedMap) Set(key, value interface{}) bool {
 // GetOrDefault returns the value for a key. If the key does not exist, returns
 // the default value instead.
 func (m *OrderedMap) GetOrDefault(key, defaultValue interface{}) interface{} {
-	m.RLocker()
+	m.RLock()
 	defer m.RUnlock()
 	if value, ok := m.kv[key]; ok {
 		return value.Value.(*orderedMapElement).value
@@ -68,7 +68,7 @@ func (m *OrderedMap) GetOrDefault(key, defaultValue interface{}) interface{} {
 
 // Len returns the number of elements in the map.
 func (m *OrderedMap) Len() int {
-	m.RLocker()
+	m.RLock()
 	defer m.RUnlock()
 	return len(m.kv)
 }
@@ -77,7 +77,7 @@ func (m *OrderedMap) Len() int {
 // replaced it will retain the same position. To ensure most recently set keys
 // are always at the end you must always Delete before Set.
 func (m *OrderedMap) Keys() (keys []interface{}) {
-	m.RLocker()
+	m.RLock()
 	defer m.RUnlock()
 	keys = make([]interface{}, m.Len())
 
@@ -107,7 +107,7 @@ func (m *OrderedMap) Delete(key interface{}) (didDelete bool) {
 // Front will return the element that is the first (oldest Set element). If
 // there are no elements this will return nil.
 func (m *OrderedMap) Front() *Element {
-	m.RLocker()
+	m.RLock()
 	defer m.RUnlock()
 	front := m.ll.Front()
 	if front == nil {
@@ -126,7 +126,7 @@ func (m *OrderedMap) Front() *Element {
 // Back will return the element that is the last (most recent Set element). If
 // there are no elements this will return nil.
 func (m *OrderedMap) Back() *Element {
-	m.RLocker()
+	m.RLock()
 	defer m.RUnlock()
 	back := m.ll.Back()
 	if back == nil {
