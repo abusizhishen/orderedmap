@@ -1,9 +1,12 @@
 package orderedmap
 
 import (
+	"bytes"
 	"container/list"
+	"encoding/gob"
 	"encoding/json"
 	"sync"
+	"errors"
 )
 
 type orderedMapElement struct {
@@ -142,35 +145,53 @@ func (m *OrderedMap) Back() *Element {
 	}
 }
 
-type Item [2]interface{}
-type Collection []Item
-
 // marshal json to save
-func (m *OrderedMap) MarshalJSON() ([]byte,error) {
+func (m *OrderedMap) MarshalJSON() ([]byte, error) {
 	var keys = m.Keys()
-	var count = len(keys)
-	var collection = make(Collection, count)
+	var collection = make([]interface{}, 0, len(keys)*2)
 	var data interface{}
-	for idx,key := range keys{
-		data,_ = m.Get(key)
-		collection[idx] = Item{key, data}
+	for _, key := range keys {
+		data, _ = m.Get(key)
+		collection = append(collection, key)
+		collection = append(collection, data)
 	}
 
-	return json.Marshal(collection)
+	var buf = new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+	err := enc.Encode(collection)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(buf.Bytes())
 }
 
 // unmarshal json to load byte
-func (m *OrderedMap)UnmarshalJSON(data []byte) error  {
-	var collection Collection
-	err := json.Unmarshal(data, &collection)
-	if err != nil{
+func (m *OrderedMap) UnmarshalJSON(data []byte) error {
+	var bys []byte
+	err := json.Unmarshal(data, &bys)
+	if err != nil {
 		return err
 	}
 
-	for _, item := range collection{
-		m.Set(item[0],item[1])
+	var collection []interface{}
+	var buf = bytes.NewReader(bys)
+	dec := gob.NewDecoder(buf)
+	err = dec.Decode(&collection)
+	if err != nil {
+		return err
+	}
+
+	length := len(collection)
+	count := length >> 1
+	if count<<1 != length {
+		return errors.New("invalid data, key-value doesn't match")
+	}
+
+	var idx int
+	for i := 0; i < count; i++ {
+		idx = i << 1
+		m.Set(collection[idx], collection[idx+1])
 	}
 
 	return nil
 }
-

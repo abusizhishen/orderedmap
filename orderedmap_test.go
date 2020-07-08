@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/elliotchance/orderedmap"
+	"bytes"
+	"encoding/json"
+	"github.com/abusizhishen/orderedmap"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -301,6 +303,89 @@ func TestOrderedMap_Back(t *testing.T) {
 		m := orderedmap.NewOrderedMap()
 		m.Set(1, true)
 		assert.NotNil(t, m.Back())
+	})
+}
+
+func TestOrderedMap_MarshalJSON(t *testing.T) {
+	t.Run("MarshalJsonIntKeyValue", func(t *testing.T) {
+		m := orderedmap.NewOrderedMap()
+		m.Set(1, 1)
+		b, err := json.Marshal(m)
+		var bys = []byte{34, 68, 80, 43, 66, 65, 103, 69, 67, 47, 52, 73, 65, 65, 82, 65, 65, 65, 66, 84, 47, 103, 103, 65, 67, 65, 50, 108, 117, 100, 65, 81, 67, 65, 65, 73, 68, 97, 87, 53, 48, 66, 65, 73, 65, 65, 103, 61, 61, 34}
+		result := bytes.Equal(bys, b) && nil == err
+
+		assert.True(t, result)
+	})
+
+	t.Run("MarshalJsonStringKeyValue", func(t *testing.T) {
+		m := orderedmap.NewOrderedMap()
+		m.Set("foo", "boo")
+		b, err := json.Marshal(m)
+		var bys = []byte{34, 68, 80, 43, 66, 65, 103, 69, 67, 47, 52, 73, 65, 65, 82, 65, 65, 65, 67, 68, 47, 103, 103, 65, 67, 66, 110, 78, 48, 99, 109, 108, 117, 90, 119, 119, 70, 65, 65, 78, 109, 98, 50, 56, 71, 99, 51, 82, 121, 97, 87, 53, 110, 68, 65, 85, 65, 65, 50, 74, 118, 98, 119, 61, 61, 34}
+		result := bytes.Equal(bys, b) && nil == err
+
+		assert.True(t, result)
+	})
+
+	t.Run("MarshalJsonMixedKeyValue", func(t *testing.T) {
+		m := orderedmap.NewOrderedMap()
+		m.Set(1, 1)
+		m.Set("foo", "boo")
+		m.Set("true", true)
+		b, err := json.Marshal(m)
+		var bys = []byte{34, 68, 80, 43, 66, 65, 103, 69, 67, 47, 52, 73, 65, 65, 82, 65, 65, 65, 69, 106, 47, 103, 103, 65, 71, 65, 50, 108, 117, 100, 65, 81, 67, 65, 65, 73, 68, 97, 87, 53, 48, 66, 65, 73, 65, 65, 103, 90, 122, 100, 72, 74, 112, 98, 109, 99, 77, 66, 81, 65, 68, 90, 109, 57, 118, 66, 110, 78, 48, 99, 109, 108, 117, 90, 119, 119, 70, 65, 65, 78, 105, 98, 50, 56, 71, 99, 51, 82, 121, 97, 87, 53, 110, 68, 65, 89, 65, 66, 72, 82, 121, 100, 87, 85, 69, 89, 109, 57, 118, 98, 65, 73, 67, 65, 65, 69, 61, 34}
+		result := bytes.Equal(bys, b) && nil == err
+
+		assert.True(t, result)
+	})
+
+	t.Run("Performance", func(t *testing.T) {
+	})
+}
+
+func TestOrderedMap_UnmarshalJSON(t *testing.T) {
+	t.Run("UnmarshalJsonIntKeyValue", func(t *testing.T) {
+		m := orderedmap.NewOrderedMap()
+		var bys = []byte{34, 68, 80, 43, 66, 65, 103, 69, 67, 47, 52, 73, 65, 65, 82, 65, 65, 65, 66, 84, 47, 103, 103, 65, 67, 65, 50, 108, 117, 100, 65, 81, 67, 65, 65, 73, 68, 97, 87, 53, 48, 66, 65, 73, 65, 65, 103, 61, 61, 34}
+		err := json.Unmarshal(bys, m)
+		value, ok := m.Get(1)
+		result := nil == err && value == 1 && ok == true
+
+		assert.True(t, result)
+	})
+
+	t.Run("UnmarshalJsonStringKeyValue", func(t *testing.T) {
+		m := orderedmap.NewOrderedMap()
+		var bys = []byte{34, 68, 80, 43, 66, 65, 103, 69, 67, 47, 52, 73, 65, 65, 82, 65, 65, 65, 67, 68, 47, 103, 103, 65, 67, 66, 110, 78, 48, 99, 109, 108, 117, 90, 119, 119, 70, 65, 65, 78, 109, 98, 50, 56, 71, 99, 51, 82, 121, 97, 87, 53, 110, 68, 65, 85, 65, 65, 50, 74, 118, 98, 119, 61, 61, 34}
+		err := json.Unmarshal(bys, m)
+		value, ok := m.Get("foo")
+		result := nil == err && value == "boo" && ok == true
+
+		assert.True(t, result)
+	})
+
+	t.Run("UnmarshalJsonMixedKeyValue", func(t *testing.T) {
+		m := orderedmap.NewOrderedMap()
+		var bys = []byte{34, 68, 80, 43, 66, 65, 103, 69, 67, 47, 52, 73, 65, 65, 82, 65, 65, 65, 69, 106, 47, 103, 103, 65, 71, 65, 50, 108, 117, 100, 65, 81, 67, 65, 65, 73, 68, 97, 87, 53, 48, 66, 65, 73, 65, 65, 103, 90, 122, 100, 72, 74, 112, 98, 109, 99, 77, 66, 81, 65, 68, 90, 109, 57, 118, 66, 110, 78, 48, 99, 109, 108, 117, 90, 119, 119, 70, 65, 65, 78, 105, 98, 50, 56, 71, 99, 51, 82, 121, 97, 87, 53, 110, 68, 65, 89, 65, 66, 72, 82, 121, 100, 87, 85, 69, 89, 109, 57, 118, 98, 65, 73, 67, 65, 65, 69, 61, 34}
+		err := json.Unmarshal(bys, m)
+		result := err == nil
+		keys := []interface{}{1, "foo", "true"}
+		result = result && len(m.Keys()) == len(keys)
+		for idx, key := range m.Keys() {
+			result = result && keys[idx] == key
+		}
+
+		value, ok := m.Get("foo")
+		result = result && value == "boo" && ok == true
+		value, ok = m.Get(1)
+		result = result && value == 1 && ok == true
+		value, ok = m.Get("true")
+		result = result && value == true && ok == true
+
+		assert.True(t, result)
+	})
+
+	t.Run("Performance", func(t *testing.T) {
 	})
 }
 
